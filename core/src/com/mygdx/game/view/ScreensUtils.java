@@ -18,7 +18,6 @@ import static com.mygdx.game.view.GameScreen.multiplexer;
 
 public final class ScreensUtils {
     // Для реакции
-    public static Texture a;
     public static Feeling newFeeling = null;
     private static float screenAlpha, elementsAlpha, backgroundAlpha, newElementAlpha, moveX, newElementDecrease;
     public static Texture elementBackground;
