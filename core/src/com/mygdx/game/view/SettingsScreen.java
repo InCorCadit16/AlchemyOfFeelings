@@ -19,16 +19,13 @@ public class SettingsScreen implements Screen {
     private Stage stage;
     private ImageButton sound_button, music_button, notification_button, language_button;
 
-    // Переменные настроек
-    boolean sound, music, notification, language;
+    
 
     SettingsScreen(MyGdxGame gam) {
         game = gam;
         camera = new OrthographicCamera(MyGdxGame.VIRTUAL_WIDTH,MyGdxGame.VIRTUAL_HEIGHT);
         camera.setToOrtho(false,MyGdxGame.VIRTUAL_WIDTH,MyGdxGame.VIRTUAL_HEIGHT);
         stage = new Stage(new StretchViewport(MyGdxGame.VIRTUAL_WIDTH,MyGdxGame.VIRTUAL_HEIGHT, camera));
-
-        sound = music = notification = language = true;
 
         initButtons();
 
@@ -45,7 +42,7 @@ public class SettingsScreen implements Screen {
         if (Gdx.input.isTouched()) {
             Vector3 v = camera.unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0));
             if (v.x < 300 | v.x > 500 | v.y < 190 | v.y > 290) {
-                game.setScreen(new MainMenuScreen(game));
+                game.setScreen(new MainMenuScreen(game,false));
                 dispose();
             }
         }
@@ -60,7 +57,7 @@ public class SettingsScreen implements Screen {
 
         // SOUND
         ImageButton.ImageButtonStyle style = new ImageButton.ImageButtonStyle();
-        style.imageUp = new TextureRegionDrawable(new TextureRegion(game.sound_on));
+        style.imageUp = new TextureRegionDrawable(new TextureRegion(game.sound? game.sound_on:game.sound_off));
         sound_button.setStyle(style);
 
         sound_button.setBounds(308, 220, 40,40);
@@ -70,19 +67,21 @@ public class SettingsScreen implements Screen {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 super.clicked(event, x, y);
-                if (sound) {
+                if (game.sound) {
                     sound_button.getStyle().imageUp = new TextureRegionDrawable(new TextureRegion(game.sound_off));
-                    sound = false;
+                    game.playlist.stop();
+                    game.sound = false;
                 } else {
                     sound_button.getStyle().imageUp = new TextureRegionDrawable(new TextureRegion(game.sound_on));
-                    sound = true;
+                    game.playlist.play();
+                    game.sound = true;
                 }
             }
         });
 
         // MUSIC
         style = new ImageButton.ImageButtonStyle();
-        style.imageUp = new TextureRegionDrawable(new TextureRegion(game.music_on));
+        style.imageUp = new TextureRegionDrawable(new TextureRegion(game.music? game.music_on:game.music_off));
         music_button.setStyle(style);
 
         music_button.setBounds(352, 220, 40,40);
@@ -92,19 +91,21 @@ public class SettingsScreen implements Screen {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 super.clicked(event, x, y);
-                if (music) {
+                if (game.music) {
                     music_button.getStyle().imageUp = new TextureRegionDrawable(new TextureRegion(game.music_off));
-                    music = false;
+                    game.playlist.pause();
+                    game.music = false;
                 } else {
                     music_button.getStyle().imageUp = new TextureRegionDrawable(new TextureRegion(game.music_on));
-                    music = true;
+                    game.playlist.play();
+                    game.music = true;
                 }
             }
         });
 
         // LANGUAGE
         style = new ImageButton.ImageButtonStyle();
-        style.imageUp = new TextureRegionDrawable(new TextureRegion(game.language_ru));
+        style.imageUp = new TextureRegionDrawable(new TextureRegion(game.language? game.language_ru:game.language_en));
         language_button.setStyle(style);
 
         language_button.setBounds(400, 220, 40,40);
@@ -114,19 +115,19 @@ public class SettingsScreen implements Screen {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 super.clicked(event, x, y);
-                if (language) {
+                if (game.language) {
                     language_button.getStyle().imageUp = new TextureRegionDrawable(new TextureRegion(game.language_en));
-                    language = false;
+                    game.language = false;
                 } else {
                     language_button.getStyle().imageUp = new TextureRegionDrawable(new TextureRegion(game.language_ru));
-                    language = true;
+                    game.language = true;
                 }
             }
         });
 
         // NOTIFICATION
         style = new ImageButton.ImageButtonStyle();
-        style.imageUp = new TextureRegionDrawable(new TextureRegion(game.notification_on));
+        style.imageUp = new TextureRegionDrawable(new TextureRegion( game.notification? game.notification_on:game.notification_off));
         notification_button.setStyle(style);
 
         notification_button.setBounds(448, 220, 40,40);
@@ -136,12 +137,12 @@ public class SettingsScreen implements Screen {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 super.clicked(event, x, y);
-                if (notification) {
+                if (game.notification) {
                     notification_button.getStyle().imageUp = new TextureRegionDrawable(new TextureRegion(game.notification_off));
-                    notification = false;
+                    game.notification = false;
                 } else {
                     notification_button.getStyle().imageUp = new TextureRegionDrawable(new TextureRegion(game.notification_on));
-                    notification = true;
+                    game.notification = true;
                 }
             }
         });

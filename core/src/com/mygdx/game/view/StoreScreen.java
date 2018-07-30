@@ -36,7 +36,7 @@ public class StoreScreen implements Screen {
         game.batch.end();
 
         if (Gdx.input.isTouched()) {
-            game.setScreen(new MainMenuScreen(game));
+            game.setScreen(new MainMenuScreen(game, false));
             this.dispose();
         }
     }

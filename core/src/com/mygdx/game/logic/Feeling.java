@@ -1,8 +1,14 @@
 package com.mygdx.game.logic;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Camera;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g3d.environment.ShadowMap;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -11,58 +17,56 @@ import com.badlogic.gdx.scenes.scene2d.Touchable;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.mygdx.game.view.GameScreen;
 import com.mygdx.game.MyGdxGame;
-import com.mygdx.game.view.ScreensUtils;
 
+import java.awt.HeadlessException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Map;
 
 
-public class Feeling extends Actor {
-    public static final int WIDTH = 60, HEIGHT = 60, ATLAS_WIDTH = 100, ATLAS_HEIGHT = 100;
-    public final int ABSOLUTE_START_X, ABSOLUTE_START_Y, ATLAS_X, ATLAS_Y;
+public class Feeling extends Actor  {
+    public static final int WIDTH = 65, HEIGHT = 65;
+    public int ABSOLUTE_START_X, ABSOLUTE_START_Y;
     public float lockX, lockY;
-    private String name, rare;
+    private String name, rare, description, breathDescription;
     private int number, benchPosition = 0;
-    private Boolean isOpened, isMoving = false;
+    private int specialNumber;
+    private Feeling linkedFeeling, choiceFeeling;
+    private Boolean isOpened, isMoving = false, isTaken = false, positivePolarity;
     private ArrayList<Feeling> formula;
-    private TextureRegion picture;
+    private Texture picture;
+    private Texture goal_picture;
     private Vector2 position, currentPosition, direction, bufferVector;
+    private ShapeRenderer shapeRenderer;
+    public int level;
 
-    Feeling(int number, String name, String rare,  boolean isOpened,
-                   ArrayList<Feeling> formula, TextureRegion picture,int x,int y, int atals_x, int atlas_y) {
+    Feeling(int number, String name, String rare,  boolean isOpened, Texture picture, Texture goal_picture,int x,int y) {
         this.number = number;
         this.name = name;
         this.rare = rare;
         this.isOpened = isOpened;
-        this.formula = formula;
         this.picture = picture;
+        this.goal_picture = goal_picture;
         lockX = ABSOLUTE_START_X = x;
         lockY = ABSOLUTE_START_Y = y;
-        ATLAS_X = atals_x;
-        ATLAS_Y = atlas_y;
         position = new Vector2(x,y);
         currentPosition = position.cpy();
         setListeners();
     }
 
+
+
+    // Сеттеры
     private void setListeners() {
         setBounds(currentPosition.x, currentPosition.y,
-                picture.getRegionWidth(), picture.getRegionHeight());
+                picture.getWidth(), picture.getHeight());
         setTouchable(Touchable.enabled);
 
         addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                if (getTapCount() > 1) {
-                    // Переходим в библиотеку
-                } else {
-                    // Открываем дополнительную инфу
-                }
-            }
 
             @Override
             public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
                 if (pointer > 0) return false;
+                isTaken = true;
                 Gdx.input.vibrate(50);
                 return true;
             }
@@ -95,14 +99,14 @@ public class Feeling extends Actor {
             public void touchUp(InputEvent event, float x, float y, int pointer, int button) {
                 if (currentPosition.x != position.x && currentPosition.y != position.y) {
                     isMoving = true;
-
+                    isTaken = false;
                     ReactionUtils.checkGaps(Feeling.this);
 
                     direction = position.cpy().sub(currentPosition.cpy()).nor();
                     bufferVector = new Vector2(Math.abs(currentPosition.x - position.x), Math.abs(currentPosition.y - position.y));
                     Feeling.this.setTouchable(Touchable.disabled);
-                    Gdx.input.setInputProcessor(GameScreen.multiplexer);
                 }
+                Gdx.input.setInputProcessor(GameScreen.standartMultiplexer);
             }
 
         });
@@ -113,6 +117,45 @@ public class Feeling extends Actor {
         return name;
     }
 
+    public void setName(String name) {this.name = name;}
+
+    public void setNumber(int number) {this.number = number; }
+
+    public void setDescription(String desc) {description = desc;}
+
+    public void setBreathDescription(String desc) {breathDescription = desc;}
+
+    public void setFormula(ArrayList<Feeling> formula) {
+        this.formula = formula;
+    }
+
+    public void setBufferVector(Vector2 bufferVector) {
+        direction = position.cpy().sub(currentPosition.cpy()).nor();
+        this.bufferVector = new Vector2(bufferVector);
+    }
+
+    public void setMoving(Boolean moving) {
+        isMoving = moving;
+    }
+
+    public void setIsTaken(boolean isTaken1) { isTaken = isTaken1;}
+
+    public void setSpecialNumber(int specialNumber) {
+        this.specialNumber = specialNumber;
+    }
+
+    public void setBenchPosition(int benchPosition) {
+        this.benchPosition = benchPosition;
+    }
+
+    public void setLinkedFeeling(Feeling feeling) { linkedFeeling = feeling; }
+
+    public void setChoiceFeeling(Feeling feeling) {choiceFeeling = feeling; }
+
+    public void setPositivePolarity(boolean polarity) {positivePolarity = polarity;}
+
+
+    // Геттеры
     public String getRare() {
         return rare;
     }
@@ -121,17 +164,19 @@ public class Feeling extends Actor {
         return number;
     }
 
-    public Boolean isOpened() {
-        return isOpened;
-    }
+    public String getDescription() { return description; }
+
+    public String getBreathDescription() { return breathDescription; }
 
     public ArrayList<Feeling> getFormula() {
         return formula;
     }
 
-    public TextureRegion getPicture() {
+    public Texture getPicture() {
         return picture;
     }
+
+    public Texture getGoal_picture() {return goal_picture; }
 
     public Vector2 getCurrentPosition() {
         return currentPosition;
@@ -141,32 +186,54 @@ public class Feeling extends Actor {
         return position;
     }
 
-    public void setBufferVector(Vector2 bufferVector) {
-        direction = position.cpy().sub(currentPosition.cpy()).nor();
-        this.bufferVector = new Vector2(bufferVector);
-    }
-
-    public boolean isMoving() {
-        return isMoving;
-    }
-
-    public void setMoving(Boolean moving) {
-        isMoving = moving;
-    }
-
     public int getBenchPosition() {
         return benchPosition;
     }
 
-    public void setBenchPosition(int benchPosition) {
-        this.benchPosition = benchPosition;
+    public Integer getSpecialNumber() {
+        return specialNumber;
     }
 
+    public Feeling getLinkedFeeling() {return linkedFeeling;}
+
+    public Feeling getChoiceFeeling() {return choiceFeeling;}
+
+
+    // Методы поиска
+    public static String findBreathDescription(String name) {
+        String breathDescription = null;
+        for (Feeling f: MyGdxGame.feelings) {
+            if (name.equals(f.getName()))
+                breathDescription = f.getBreathDescription();
+        }
+        return breathDescription;
+    }
+
+    public static Feeling findFeeling(String name) {
+        for (Feeling f: MyGdxGame.feelings) {
+            if (name.equals(f.getName()))
+                return f;
+        }
+        return null;
+    }
+
+    // is-методы
+    public boolean isMoving() {
+        return isMoving;
+    }
+
+    public Boolean isOpened() {
+        return isOpened;
+    }
+
+    public boolean isTaken() {return isTaken;}
+
+    public boolean isPositivePolarity() {return positivePolarity;}
 
 
     // Метод движения
     public void update() {
-        final float SPEED = 4f;
+        final float SPEED = 5f;
         Vector2 speed = direction.cpy();
 
         if ((position.x > currentPosition.x - 3 && position.x <  currentPosition.x + 3) &&
@@ -177,7 +244,7 @@ public class Feeling extends Actor {
             isMoving = false;
             clearListeners();
             setListeners();
-            ReactionUtils.checkForReaction();
+            if (!ReactionUtils.checkForReaction()) notMatch();
         } else if ((position.x > currentPosition.x - 3 && position.x <  currentPosition.x + 3)) {
             direction.x = 0;
             currentPosition.add(speed.scl(SPEED));
@@ -187,6 +254,23 @@ public class Feeling extends Actor {
         } else {
             currentPosition.add(speed.scl(SPEED));
         }
+    }
+
+    private void notMatch() {
+        Gdx.input.vibrate(200);
+        Feeling f;
+        for (Map.Entry<Integer,Feeling> pair: MyGdxGame.startProducts.entrySet()) {
+            f = pair.getValue();
+            f.benchPosition = 0;
+            f.isMoving = true;
+            f.isTaken = false;
+            f.position.x = f.lockX;
+            f.position.y = f.lockY;
+            f.direction = f.position.cpy().sub(f.currentPosition.cpy()).nor();
+            f.bufferVector = new Vector2(Math.abs(f.currentPosition.x - f.position.x), Math.abs(f.currentPosition.y - f.position.y));
+            f.setTouchable(Touchable.disabled);
+        }
+        MyGdxGame.startProducts.clear();
     }
 
     // Открыть чувство
@@ -208,7 +292,125 @@ public class Feeling extends Actor {
     @Override
     public void draw(Batch batch, float parentAlpha) {
         super.draw(batch,parentAlpha);
-        batch.draw(picture,currentPosition.x,currentPosition.y,WIDTH,HEIGHT);
+        batch.end();
+        rectangleShadow(batch);
+        batch.begin();
+        if (isTaken | isMoving) {
+            batch.draw(picture, currentPosition.x, currentPosition.y, WIDTH, HEIGHT);
+            return;
+        }
+
+        if (currentPosition.x > 0 & currentPosition.x < 315)
+            batch.draw(picture,currentPosition.x,currentPosition.y,WIDTH,HEIGHT);
+
+    }
+
+    private void drawShadow(Camera camera) {
+        if (isTaken | isMoving) {
+            float x1 = currentPosition.x,
+                    y1 = currentPosition.y,
+                    x2 = currentPosition.x,
+                    y2 = currentPosition.y,
+                    x3 = currentPosition.x,
+                    y3 = currentPosition.y,
+                    x4 = currentPosition.x,
+                    y4 = currentPosition.y,
+                    x5 = currentPosition.x,
+                    y5 = currentPosition.y,
+                    x6 = currentPosition.x,
+                    y6 = currentPosition.y;
+            Color c1 = new Color(Color.BLACK);
+            Color c2 = new Color(Color.RED);
+            Color c3 = new Color(Color.BLUE);
+
+            if (currentPosition.x <= 525) {
+                if (currentPosition.y > 235) {
+                    x4 += WIDTH;
+
+                    x2 = x1 + 50;
+                    y2 = y1 + (currentPosition.y - 275);
+                    x3 = x1 - (565 - currentPosition.x);
+                    y3 = y1 + (currentPosition.y - 275);
+
+                    x5 = x4 + 20;
+                    y5 = y4 + (currentPosition.y - 275);
+                    x6 = x4 - (525 - currentPosition.x);
+                    y6 = y4 + (currentPosition.y - 275);
+                } else {
+                    x1 += WIDTH;
+                    y4 += HEIGHT;
+                }
+
+            } else {
+                if (currentPosition.y > 235) {
+                    y1 += HEIGHT;
+                    x4 += WIDTH;
+                } else {
+                    x4 += WIDTH;
+                    y4 += HEIGHT;
+                }
+            }
+
+            Gdx.gl.glEnable(GL20.GL_BLEND);
+            Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+            shapeRenderer = new ShapeRenderer();
+            camera.update();
+            shapeRenderer.setProjectionMatrix(camera.combined);
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            shapeRenderer.triangle(x1,y1,x2,y2,x3,y3,c1,c2,c3);
+            shapeRenderer.triangle(x4,y4,x5,y5,x6,y6,c1,c2,c3);
+            shapeRenderer.end();
+        }
+    }
+
+    private void rectangleShadow(Batch batch) {
+        if (isTaken | isMoving) {
+            float x = currentPosition.x,
+                    y = currentPosition.y,
+                    width = WIDTH,
+                    height = HEIGHT;
+            Color c1 = new Color(Color.BLACK);
+            Color c2 = new Color(Color.BLACK);
+            Color c3 = new Color(Color.BLACK);
+            Color c4 = new Color(Color.BLACK);
+            Color buff;
+
+            c1.a = 0f;
+            c2.a = 0f;
+            c3.a = 0f;
+            c4.a = 0f;
+
+            if (currentPosition.x <= 525) {
+                x = currentPosition.x - (525 - currentPosition.x);
+                width += (525 - currentPosition.x);
+            }
+            else {
+                width = 65 + (currentPosition.x - 525);
+            }
+
+            if (currentPosition.y < 235) {
+                y = currentPosition.y - (235 - currentPosition.y);
+                height += (235 - currentPosition.y);
+            }
+            else {
+                height = 65 + (currentPosition.y - 235);
+            }
+
+            if (x > 525)
+                buff = y > 235? c1:c4;
+            else
+                buff = y > 235?c2:c3;
+            buff.set(Color.BLACK);
+            buff.a = 1f;
+
+            Gdx.gl.glEnable(GL20.GL_BLEND);
+            Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+            shapeRenderer = new ShapeRenderer();
+            shapeRenderer.setProjectionMatrix(batch.getProjectionMatrix());
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            shapeRenderer.rect(x, y, width, height,c1,c2, c3,c4);
+            shapeRenderer.end();
+        }
     }
 }
 
