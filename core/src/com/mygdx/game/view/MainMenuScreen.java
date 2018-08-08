@@ -5,6 +5,7 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 
 
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -13,6 +14,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.mygdx.game.MyGdxGame;
+import com.mygdx.game.logic.ProgressData;
 
 public class MainMenuScreen implements Screen {
     private final MyGdxGame game;
@@ -41,6 +43,7 @@ public class MainMenuScreen implements Screen {
     @Override
     public void render(float delta) {
         ScreensUtils.mainMenuRender(game, camera);
+        game.expBar = new Texture(Gdx.files.internal("interface/experience_bar/"+ ProgressData.getCurrentExperience() +".bmp"));
 
         if (fromGame) {
             buttonsAppear();
@@ -60,7 +63,7 @@ public class MainMenuScreen implements Screen {
                         this.dispose();
                     }
                     break;
-            case 1: game.setScreen(new AtlasScreen(game, false));
+            case 1: game.setScreen(new AtlasScreen(game, false,0));
                     this.dispose();
                     break;
             case 2: game.setScreen(new SettingsScreen(game));
@@ -69,7 +72,7 @@ public class MainMenuScreen implements Screen {
             case 3: game.sendEmail.sendIntent();
                     toStage = -1;
                     break;
-            case 4: game.setScreen(new StoreScreen(game));
+            case 4: game.setScreen(new StoreScreen(game, null));
                     this.dispose();
                     break;
         }

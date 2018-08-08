@@ -34,7 +34,7 @@ public class AtlasScreen implements Screen {
     private AtlasPage[] pages = new AtlasPage[13];
     private Button btn;
 
-    public AtlasScreen(MyGdxGame gam, boolean isFromGame) {
+    AtlasScreen(MyGdxGame gam, boolean fromGame, int index1) {
         setupFont();
 
         font.usesIntegerPositions();
@@ -42,28 +42,43 @@ public class AtlasScreen implements Screen {
         camera = new OrthographicCamera(MyGdxGame.VIRTUAL_WIDTH,MyGdxGame.VIRTUAL_HEIGHT);
         camera.setToOrtho(false,MyGdxGame.VIRTUAL_WIDTH,MyGdxGame.VIRTUAL_HEIGHT);
         stage = new Stage(new StretchViewport(MyGdxGame.VIRTUAL_WIDTH, MyGdxGame.VIRTUAL_HEIGHT, camera));
-        this.isFromGame = isFromGame;
+        isFromGame = fromGame;
 
-        for (int i = 0; i < pages.length;i++) {
-            pages[i] = new AtlasPage();
+        int i = 0;
+        for (int n = 0;n < pages.length; n++) {
+            pages[n] = new AtlasPage();
+            pages[n].left = ++i;
+            pages[n].right = ++i;
         }
+
         pages[0].title = 1;
+        pages[0].titleText = one;
         pages[3].title = 2;
+        pages[3].titleText = two;
         pages[7].title = 3;
+        pages[7].titleText = three;
         pages[9].title = 4;
+        pages[9].titleText = four;
         pages[11].title = 5;
+        pages[11].titleText = five;
+
+        pages[0].left = 0;
+        pages[3].left = 0;
+        pages[7].left = 0;
+        pages[9].left = 0;
+        pages[11].left = 0;
         
-        index = 1;
+
 
         for (Feeling feeling : MyGdxGame.feelings) {
             if (feeling.isOpened()) {
                 btn = new Button(new TextureRegionDrawable(new TextureRegion(feeling.getPicture())));
-                btn.setSize(Feeling.WIDTH, Feeling. HEIGHT);
+                btn.setSize(Feeling.WIDTH, Feeling.HEIGHT);
                 btn.setName(feeling.getName());
                 btn.addListener(new ClickListener() {
                     @Override
                     public void clicked(InputEvent event, float x, float y) {
-                        game.setScreen(new AtlasElementScreen(game,Feeling.findFeeling(feeling.getName()),isFromGame));
+                        game.setScreen(new AtlasElementScreen(game,Feeling.findFeeling(feeling.getName()),isFromGame, index));
                         dispose();
                     }
                 });
@@ -76,6 +91,7 @@ public class AtlasScreen implements Screen {
             page.sort();
         }
 
+        index = index1;
         setPage(pages[index]);
 
         setupButtons();
@@ -89,8 +105,6 @@ public class AtlasScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        Gdx.gl20.glClearColor(0,0,0,1);
-        Gdx.gl20.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         ScreensUtils.atlasScreenRender(game,camera,isFromGame);
 
@@ -102,6 +116,9 @@ public class AtlasScreen implements Screen {
         if (pages[index].title != 0) {
             drawTitle();
         }
+
+        drawNumbers();
+
         game.batch.end();
 
         stage.act();
@@ -109,19 +126,28 @@ public class AtlasScreen implements Screen {
     }
 
     private void drawInfo(Button btn) {
+        font.getData().setScale(0.75f);
+        font.draw(game.batch, btn.getName().replaceAll(" ",""), btn.getX()+ 70, btn.getY() + 65);
         font.getData().setScale(0.5f);
-        font.draw(game.batch, btn.getName().replaceAll(" ",""), btn.getX()+ 75, btn.getY() + 65);
-        font.getData().setScale(0.5f);
-        font.setUseIntegerPositions(true);
-        font.draw(game.batch, Feeling.findBreathDescription(btn.getName()), btn.getX()+ 75, btn.getY() + 45);
-        font.setUseIntegerPositions(false);
+        font.draw(game.batch, Feeling.findBreathDescription(btn.getName()), btn.getX()+ 70, btn.getY() + 40,255f,Align.left,true);
         font.getData().setScale(4);
     }
 
     private void drawTitle() {
         font.getData().setScale(2);
         font.draw(game.batch,"Глава " + pages[index].title, 120,330);
+        font.getData().setScale(0.6f);
+        font.draw(game.batch,pages[index].titleText,445,440,310f,Align.topLeft,true);
+    }
+
+    private void drawNumbers() {
         font.getData().setScale(0.5f);
+        if (pages[index].left != 0)
+            font.draw(game.batch, String.valueOf(pages[index].left), 210, 60);
+
+        if (pages[index].right != 0)
+            font.draw(game.batch, String.valueOf(pages[index].right), 590, 60);
+        font.getData().setScale(4f);
     }
 
     private void setupButtons() {
@@ -187,6 +213,7 @@ public class AtlasScreen implements Screen {
     }
 
     private void sortFeeling(Feeling feeling, Button btn) {
+        if (!feeling.isOpened()) return;
         int n = feeling.getNumber();
         if (n <= 10) pages[1].add(btn);
         else if (n <= 15) pages[2].add(btn);
@@ -297,4 +324,17 @@ public class AtlasScreen implements Screen {
     public void dispose() {
         stage.dispose();
     }
+
+    private final String one = "",
+    two = "Шли годы.Мы взрослели.Хлоя день ото дня превращалась в очаровательную девушку,которая " +
+            "рвалась вылететь из клетки.Я понимал,что частью той клетки был и я.Было очень больно это " +
+            "осознавать.Моя симпатия к ней перерастала в нечто более серьёзное.Я был убеждён,что Хлоя моя " +
+            "вторая половина и был абсолютно предан ей.Пусть она не считала так,я не собирался предавать " +
+            "её,ведь однажды она должна была посмотреть на меня другими глазами.И всё же я не " +
+            "навязывался,был очень осторжен и возможно она даже и не дагадывалась о моих глубоких " +
+            "чувствах.Теперь я понимаю ошибочность своей позиции отмалчивания,ведь она приводила лишь " +
+            "к разочарованию и волнам накатывающейся обиды.",
+    three = "",
+    four = "",
+    five = "";
 }

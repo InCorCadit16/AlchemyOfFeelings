@@ -6,8 +6,6 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g3d.environment.ShadowMap;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
@@ -18,7 +16,6 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.mygdx.game.view.GameScreen;
 import com.mygdx.game.MyGdxGame;
 
-import java.awt.HeadlessException;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -37,6 +34,7 @@ public class Feeling extends Actor  {
     private Texture goal_picture;
     private Vector2 position, currentPosition, direction, bufferVector;
     private ShapeRenderer shapeRenderer;
+    private Group group;
     public int level;
 
     Feeling(int number, String name, String rare,  boolean isOpened, Texture picture, Texture goal_picture,int x,int y) {
@@ -154,6 +152,8 @@ public class Feeling extends Actor  {
 
     public void setPositivePolarity(boolean polarity) {positivePolarity = polarity;}
 
+    public void setGroup(Group g) { group = g; }
+
 
     // Геттеры
     public String getRare() {
@@ -198,6 +198,7 @@ public class Feeling extends Actor  {
 
     public Feeling getChoiceFeeling() {return choiceFeeling;}
 
+    public Group getGroup() { return group; }
 
     // Методы поиска
     public static String findBreathDescription(String name) {
@@ -291,18 +292,11 @@ public class Feeling extends Actor  {
     // Методы класса Actor
     @Override
     public void draw(Batch batch, float parentAlpha) {
-        super.draw(batch,parentAlpha);
         batch.end();
         rectangleShadow(batch);
         batch.begin();
-        if (isTaken | isMoving) {
+        if ((isTaken | isMoving | (currentPosition.x > 0 & currentPosition.x < 315) | MyGdxGame.startProducts.containsValue(this) | level == GameScreen.showedLevel) & isOpened)
             batch.draw(picture, currentPosition.x, currentPosition.y, WIDTH, HEIGHT);
-            return;
-        }
-
-        if (currentPosition.x > 0 & currentPosition.x < 315)
-            batch.draw(picture,currentPosition.x,currentPosition.y,WIDTH,HEIGHT);
-
     }
 
     private void drawShadow(Camera camera) {

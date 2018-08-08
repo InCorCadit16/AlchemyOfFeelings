@@ -14,6 +14,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public final class ReactionUtils {
+    public static Feeling target;
 
     public static void checkGaps (Feeling feeling) {
 
@@ -23,9 +24,6 @@ public final class ReactionUtils {
                     feeling.getPosition().set(ScreensUtils.xPositions.get(i-1),ScreensUtils.yPositions.get(i-1));
                     MyGdxGame.startProducts.put(i, feeling);
                     feeling.setBenchPosition(i);
-                    if (ProgressData.getCurrentLevel() > 2 & ProgressData.getCurrentLevel() < 5 &
-                            feeling.getBenchPosition() == ProgressData.getGapsCount() - 1)
-                        choiceRareElementCheck();
                     return;
                 }
             }
@@ -39,28 +37,41 @@ public final class ReactionUtils {
 
     public static boolean checkForReaction() {
         if (MyGdxGame.startProducts.size() == ProgressData.getGapsCount()) {
-            String[] stringMassive = new String[ProgressData.getGapsCount()];
+            String[] givenF, targetF;
             ArrayList<Feeling> feelingsArray = new ArrayList<>(MyGdxGame.startProducts.values());
             Collections.sort(feelingsArray, (feeling, t1) -> {
                 return feeling.getName().replaceAll(" ","").length() >= t1.getName().replaceAll(" ","").length()? 1:-1; });
-            for (int i = 0; i < stringMassive.length; i++) {
-                stringMassive[i] = feelingsArray.get(i).getName();
+
+            givenF = new String[ProgressData.getGapsCount()];
+            targetF = new String[ProgressData.getGapsCount()];
+            for (int i = 0; i < givenF.length; i++) {
+                givenF[i] = feelingsArray.get(i).getName();
+                if (target != null) targetF[i] =  target.getFormula().get(i).getName();
             }
 
-            for (int n = feelingsArray.get(0).getNumber(); n < MyGdxGame.feelings.size(); n++) {
-                if (MyGdxGame.feelings.get(n).isOpened()) continue;
-                
-                if (isFormulaRight(stringMassive, MyGdxGame.feelings.get(n))) {
-                    ScreensUtils.newFeeling = MyGdxGame.feelings.get(n);
-                    rareElementCheck(ScreensUtils.newFeeling);
-                    setRealPosition(ScreensUtils.newFeeling);
-                    ScreensUtils.stageNumber = 1;
-                    return true;
-                }
+            if (ProgressData.getCurrentLevel() < 3) {
+                // Low level Check (до 3 уровня, где работают группы)
+                return Arrays.equals(givenF,targetF);
+            } else {
+                // High level Check (от 3 уровня и выше)
+                return highLevelCheck(feelingsArray, givenF);
             }
-            return false;
         }
         return true;
+    }
+
+    private static boolean highLevelCheck(ArrayList<Feeling> feelings, String[] givenF) {
+        for (int n = feelings.get(0).getNumber(); n < MyGdxGame.feelings.size(); n++) {
+            if (MyGdxGame.feelings.get(n).isOpened()) continue;
+
+            if (isFormulaRight(givenF, MyGdxGame.feelings.get(n))) {
+                checkGroup(MyGdxGame.feelings.get(n));
+                ScreensUtils.newFeeling = MyGdxGame.feelings.get(n);
+                ScreensUtils.stageNumber = 1;
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean isFormulaRight(String[] givenFormula, Feeling feeling) {
@@ -76,74 +87,11 @@ public final class ReactionUtils {
         }
     }
 
-    private static void rareElementCheck(Feeling f) {
-        if (!f.getRare().equals("Rare")) return;
-        SaveUtils.deleteOddPolarity(f);
-    }
-
-    private static void choiceRareElementCheck() {
-            List<Feeling> choiceFeelings = new ArrayList<>();
-            for (Feeling f:MyGdxGame.feelings) {
-                if (f.getChoiceFeeling() != null) {
-                    choiceFeelings.add(f);
-                }
-            }
-
-        String[] m1 = new String[ProgressData.getGapsCount()];
-        ArrayList<Feeling> feelingsArray = new ArrayList<>(MyGdxGame.startProducts.values());
-        Collections.sort(feelingsArray, (feeling, t1) -> {
-            return feeling.getName().replaceAll(" ","").length() >= t1.getName().replaceAll(" ","").length()? 1:-1; });
-        for (int i = 0; i < m1.length; i++) {
-            m1[i] = feelingsArray.get(i).getName();
+    private static void checkGroup(Feeling feeling) {
+        for (Feeling f: feeling.getGroup().elements) {
+            if (f.isOpened()) return;
         }
-
-        String[] m2 = new String[ProgressData.getGapsCount()];
-        feelingsArray = new ArrayList<>(choiceFeelings.get(0).getFormula());
-        feelingsArray.remove(choiceFeelings.get(0).getChoiceFeeling());
-        Collections.sort(feelingsArray, (feeling, t1) -> {
-            return feeling.getName().replaceAll(" ","").length() >= t1.getName().replaceAll(" ","").length()? 1:-1; });
-        for (int i = 0; i < m2.length; i++) {
-            m2[i] = feelingsArray.get(i).getName();
-        }
-
-        if (Arrays.equals(m1,m2)) {
-            GameScreen.choiceMenu = true;
-        }
-
-    }
-
-    private static void setRealPosition(Feeling newF) {
-        int buffer;
-        float buffer2;
-        for (Feeling feeling : MyGdxGame.feelings) {
-            if (!feeling.isOpened()) {
-                if (feeling == newF) return;
-                buffer = feeling.getNumber();
-                feeling.setNumber(newF.getNumber());
-                newF.setNumber(buffer);
-
-                SaveUtils.changePlaces(newF,feeling);
-
-                buffer = feeling.ABSOLUTE_START_X;
-                feeling.ABSOLUTE_START_X = newF.ABSOLUTE_START_X;
-                newF.ABSOLUTE_START_X = buffer;
-
-                buffer = feeling.ABSOLUTE_START_Y;
-                feeling.ABSOLUTE_START_Y = newF.ABSOLUTE_START_Y;
-                newF.ABSOLUTE_START_Y = buffer;
-
-                buffer2 = feeling.lockX;
-                feeling.lockX = newF.lockX;
-                newF.lockX= buffer2;
-
-                buffer2 = feeling.lockY;
-                feeling.lockY= newF.lockY;
-                newF.lockY = buffer2;
-                break;
-            }
-        }
-
-        sort();
+        MyGdxGame.new_group = feeling.getGroup();
     }
     
     private static void sort() {

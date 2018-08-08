@@ -11,7 +11,6 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.graphics.g3d.environment.ShadowMap;
 import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
@@ -28,8 +27,6 @@ import com.mygdx.game.MyGdxGame;
 import com.mygdx.game.logic.ProgressData;
 import com.mygdx.game.logic.SaveUtils;
 
-import java.awt.RadialGradientPaint;
-
 
 public class GameScreen implements Screen {
     private final MyGdxGame game;
@@ -40,10 +37,10 @@ public class GameScreen implements Screen {
     private ImageButton goals_button;
 
     private int counter = 0;
-    static int showedLevel;
 
-    // Для выбора элемента на 3 уровне
-    public static boolean choiceMenu = false;
+    // Перелистывание уровней
+    public static int showedLevel = 1;
+    private boolean showNext = false, showPrev = false;
 
     // Для меню целей
     static Feeling chosen_goal;
@@ -65,7 +62,7 @@ public class GameScreen implements Screen {
 
     // Отвечают за нажатие на элемент
     private static int independentCounter = 0;
-    private static Feeling targetFeeling;
+    private static Feeling targetFeeling, doubleClickedFeeling;
 
 
     GameScreen(final MyGdxGame gam) {
@@ -76,13 +73,11 @@ public class GameScreen implements Screen {
         buttonsStage = new Stage(new StretchViewport(MyGdxGame.VIRTUAL_WIDTH, MyGdxGame.VIRTUAL_HEIGHT, camera));
         goalsStage = new Stage(new StretchViewport(MyGdxGame.VIRTUAL_WIDTH, MyGdxGame.VIRTUAL_HEIGHT, camera));
 
-        showedLevel = 1;
-
         game.font.setUseIntegerPositions(true);
-        game.font.getData().setScale((float) 0.7);
+        game.font.getData().setScale(0.7f);
 
         goals_font.setUseIntegerPositions(true);
-        goals_font.getData().setScale((float) 0.4);
+        goals_font.getData().setScale(0.4f);
 
         // Для сохранения цветов элементов при изменении контрастности (производится при открытии нового элемента)
         game.batch = (SpriteBatch) stage.getBatch();
@@ -96,7 +91,7 @@ public class GameScreen implements Screen {
         toMainScreen = toAtlasScreen = false;
 
         for (Feeling feeling : MyGdxGame.feelings) {
-            if (feeling.isOpened()) {
+            if (feeling.level == showedLevel & feeling.isOpened()) {
                 stage.addActor(feeling);
             }
         }
@@ -106,8 +101,6 @@ public class GameScreen implements Screen {
         setupButtons();
 
         setupGoalsMultiplexer();
-
-        Gdx.input.setInputProcessor(standartMultiplexer);
     }
 
     @Override
@@ -118,14 +111,14 @@ public class GameScreen implements Screen {
             scrollBarY = ScreensUtils.newElementRender(game, stage, scrollBarY, buttonsStage);
         } else if (toMainScreen) {
             counter = ScreensUtils.fromGameToMain(game, camera, counter);
-            if (counter == 100) {
+            if (counter == 99) {
                 game.batch = new SpriteBatch();
                 game.setScreen(new MainMenuScreen(game, true));
                 dispose();
             }
         } else if (toAtlasScreen) {
             game.batch = new SpriteBatch();
-            game.setScreen(new AtlasScreen(game, true));
+            game.setScreen(new AtlasScreen(game, true,0));
             dispose();
         } else if (goalsMenuStage > 0) {
             switch (goalsMenuStage) {
@@ -133,20 +126,17 @@ public class GameScreen implements Screen {
                         break;
                 case 2: goalsBackgroundUp();
                         break;
-                default:goalsStage.draw(); goalsStage.act();
             }
         } else if (independentCounter == -1) {
             game.batch = new SpriteBatch();
-            game.setScreen(new AtlasScreen(game, true));
+            game.setScreen(new AtlasElementScreen(game, doubleClickedFeeling ,true,0));
             independentCounter = 0;
             dispose();
         } else if (ScreensUtils.new_lvl) {
             //new level animation
             SaveUtils.loadProgress();
-            game.expBar = new Texture(Gdx.files.internal("interface/experience_bar/"+ ProgressData.getCurrentExperience() +".bmp"));
+            game.expBar = new Texture(Gdx.files.internal("interface/experience_bar/1.bmp"));
             ScreensUtils.new_lvl = false;
-        } else if (choiceMenu) {
-
         }
 
         if (independentCounter > 0) {
@@ -163,8 +153,36 @@ public class GameScreen implements Screen {
         stage.draw();
         stage.act();
 
-        game.batch.begin();
-        game.font.draw(game.batch,"Уровень " + showedLevel,100,465);
+
+            game.batch.begin();
+            game.batch.setColor(game.r, game.g, game.b, 1f);
+        if (!toMainScreen) {
+            game.batch.draw(game.name_background, 0, 430);
+            game.font.draw(game.batch, "Уровень " + showedLevel, 85, 465);
+            game.batch.setColor(1, 1, 1, 1f);
+            game.batch.draw(game.goalsBackground, goals_background.getX(), goals_background.getY());
+        }
+
+        if (showNext) {
+            if (counter == 0) setupStage();
+            counter = ScreensUtils.showNextLevel(game, counter);
+            if (counter > 315) {
+                counter = 0;
+                showNext = false;
+            }
+        } else if (showPrev) {
+            if (counter == 0) {
+                counter = 315;
+                normalizeElementsTable();
+            }
+            counter = ScreensUtils.showPrevLevel(game,counter);
+            if (counter < 10) {
+                showedLevel--;
+                setupStage();
+                counter = 0;
+                showPrev = false;
+            }
+        }
         game.batch.end();
 
         if (Gdx.input.getInputProcessor() == goalsMultiplexer) {
@@ -178,6 +196,24 @@ public class GameScreen implements Screen {
         stage.getViewport().update(width, height, false);
         buttonsStage.getViewport().update(width, height, false);
         goalsStage.getViewport().update(width, height, false);
+    }
+
+    private void normalizeElementsTable() {
+        scrollBarY = 400;
+        for (Feeling feeling : MyGdxGame.feelings) {
+            feeling.lockY = feeling.ABSOLUTE_START_Y + yStartPoint;
+            if (feeling.isOpened()) {
+                if (feeling.getBenchPosition() == 0) {
+                    feeling.getPosition().y = feeling.ABSOLUTE_START_Y + yStartPoint;
+                    feeling.setBounds(feeling.getPosition().x, feeling.getPosition().y, 75, 75);
+                    if (!feeling.isMoving())
+                        feeling.getCurrentPosition().y = feeling.ABSOLUTE_START_Y + yStartPoint;
+                    else feeling.setBufferVector(new Vector2(
+                            Math.abs(feeling.getCurrentPosition().x - feeling.getPosition().x),
+                            Math.abs(feeling.getCurrentPosition().y - feeling.getPosition().y)));
+                }
+            }
+        }
     }
 
     @Override
@@ -240,6 +276,19 @@ public class GameScreen implements Screen {
             targetFeeling.setIsTaken(false);
         }
         --independentCounter;
+    }
+
+    private void setupStage() {
+       normalizeElementsTable();
+
+       stage.clear();
+        for (Feeling feeling : MyGdxGame.feelings) {
+            if ((feeling.level == showedLevel | feeling.getBenchPosition() != 0) & feeling.isOpened()) {
+                stage.addActor(feeling);
+            }
+        }
+
+        setupStandartMultiplexer();
     }
 
     // Данный метод проверяет если достигнут низ или верх таблицы в процессе скролинг
@@ -343,8 +392,9 @@ public class GameScreen implements Screen {
     }
 
     protected void setupStandartMultiplexer() {
-        GestureDetector scrollMoveDetector, elementsDetector;
+        GestureDetector scrollMoveDetector = null, elementsDetector;
 
+        if (showedLevel < 3)
         scrollMoveDetector = new GestureDetector(20f, 0.7f, 0.11f, 0.15f, new GestureDetector.GestureAdapter()) {
                 @Override
                 public boolean touchDown(int x, int y, int pointer, int button) {
@@ -360,8 +410,13 @@ public class GameScreen implements Screen {
 
                     isDragInArea = touch.x < 315;
 
-                    coff = (ProgressData.getElementsCount() - ProgressData.getStartNumber()) / 3;
-                    coff = ProgressData.getElementsCount() - ProgressData.getStartNumber() % 3 != 0 ? ++coff : coff;
+                    int i = 0;
+                    for (Feeling f: MyGdxGame.feelings) {
+                        if (f.level == showedLevel) i++;
+                    }
+
+                    coff = i / 3;
+                    coff = i % 3 != 0 ? ++coff : coff;
                     return true;
                 }
 
@@ -411,11 +466,12 @@ public class GameScreen implements Screen {
                     if (feeling.isOpened()) {
                         x1 = feeling.getCurrentPosition().x;
                         y1 = feeling.getCurrentPosition().y;
-                        if (!feeling.isMoving() &
+                        if (!feeling.isMoving() & feeling.level == showedLevel &
                                 vector.x > x1 & vector.x < x1+65 &
                                 vector.y > y1 & vector.y < y1+65 ) {
                             if (count > 1) {
                                 independentCounter = -1;
+                                doubleClickedFeeling = feeling;
                                 return true;
                             }
 
@@ -442,16 +498,15 @@ public class GameScreen implements Screen {
                     }
                 }
 
-                if (velocityX < -200) {
+                if (velocityX < -400 & velocityX < velocityY) {
                     if (showedLevel == 5) return false;
                     showedLevel++;
+                    showNext = true;
                     return true;
                 }
-                if (velocityX > 200) {
+                if (velocityX > 400 & velocityX > velocityY) {
                     if (showedLevel == 1) return false;
-
-
-                    showedLevel--;
+                    showPrev = true;
                     return true;
                 }
                 return false;
@@ -462,7 +517,10 @@ public class GameScreen implements Screen {
 
         standartMultiplexer.addProcessor(buttonsStage);
 
+        if (scrollMoveDetector != null)
         standartMultiplexer.addProcessor(scrollMoveDetector);
+
+        Gdx.input.setInputProcessor(standartMultiplexer);
     }
 
     protected void setupGoalsMultiplexer() {
@@ -529,7 +587,7 @@ public class GameScreen implements Screen {
 
     private void setupGoalsStage() {
         ImageButton button;
-        stage.addActor(goals_background);
+        goalsStage.addActor(goals_background);
         int x = 60,y = 815, counter = 0;
         for (Feeling feeling : MyGdxGame.feelings) {
             if (!feeling.isOpened()) counter++;

@@ -6,11 +6,14 @@ import java.util.ArrayList;
 
 public class AtlasPage {
     public int title;
+    public String titleText;
     public ArrayList<Button> elements;
+    public int left,right;
     
     public AtlasPage() {
         title = 0;
         elements = new ArrayList<>();
+        left = right = 0;
     }
     
     public void add(Button btn) {
@@ -18,7 +21,7 @@ public class AtlasPage {
     }
     
     public void sort() {
-        final int ATLAS_START_X = 75, ATLAS_START_Y = 375, ATLAS_ADD_X = 390, ATLAS_ADD_Y = 80;
+        final int ATLAS_START_X = 75, ATLAS_START_Y = 375, ATLAS_ADD_X = 380, ATLAS_ADD_Y = 80;
         int x = ATLAS_START_X, y = ATLAS_START_Y;
         for (int i = 0; i < elements.size();i++) {
             elements.get(i).setPosition(x,y);
@@ -29,4 +32,5 @@ public class AtlasPage {
             else if (i+1 == 5) { x += ATLAS_ADD_X; y = ATLAS_START_Y; }
         }
     }
+
 }
