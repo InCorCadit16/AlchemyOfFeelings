@@ -6,6 +6,10 @@ public final class ProgressData {
     private static int toReachNextLevel;
     private static int currentExperience;
     private static int gapsCount;
+    public static int sins;
+    public  static int universals;
+    public  static int waitings;
+    public  static int byings;
 
     public static int getCurrentLevel() { return currentLevel; }
     public static int getToReachNextLevel() { return toReachNextLevel; }

@@ -7,14 +7,17 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.utils.Align;
 import com.mygdx.game.MyGdxGame;
 import com.mygdx.game.logic.Feeling;
+import com.mygdx.game.logic.Group;
 import com.mygdx.game.logic.ProgressData;
 import com.mygdx.game.logic.ReactionUtils;
 import com.mygdx.game.logic.SaveUtils;
 
 import java.util.ArrayList;
 
+import static com.mygdx.game.view.GameScreen.showedLevel;
 import static com.mygdx.game.view.GameScreen.standartMultiplexer;
 
 public final class ScreensUtils {
@@ -46,11 +49,11 @@ public final class ScreensUtils {
         for (int i = 0; i < ProgressData.getGapsCount(); i++)
             game.batch.draw(game.gap,xPositions.get(i),yPositions.get(i),Feeling.WIDTH,Feeling.HEIGHT);
         game.batch.draw(game.expBar, 405,445,242,20);
-        if (GameScreen.showedLevel < 3) game.batch.draw(game.scrollBar, 315, 400, 5, 80);
-        game.font.draw(game.batch,"Уровень " + GameScreen.showedLevel,85,465);
+        if (showedLevel < 3) game.batch.draw(game.scrollBar, 315, 400, 5, 80);
+        game.font.draw(game.batch,"Уровень " + showedLevel,85,465);
 
         for(Feeling f : MyGdxGame.feelings) {
-            if (f.level == GameScreen.showedLevel) {
+            if (f.level == showedLevel) {
                 game.batch.draw(game.locked, f.lockX, f.lockY, Feeling.WIDTH, Feeling.HEIGHT);
                 if (f.isOpened()) {
                     if (f.isMoving())
@@ -84,13 +87,13 @@ public final class ScreensUtils {
         game.batch.draw(game.goals_button,-305 + addition,360,60,60);
         game.batch.draw(game.atlas_button,-75 + addition, 15,50,50);
         game.batch.draw(game.blure, -800 + addition, 0, 315,480);
-        if (GameScreen.showedLevel < 3) game.batch.draw(game.scrollBar, -485 + addition, 400, 5, 80);
+        if (showedLevel < 3) game.batch.draw(game.scrollBar, -485 + addition, 400, 5, 80);
         font.getData().setScale(0.7f);
-        font.draw(game.batch,"Уровень " + GameScreen.showedLevel,-715 + addition,465);
+        font.draw(game.batch,"Уровень " + showedLevel,-715 + addition,465);
         font.getData().setScale(1.3f);
 
         for(Feeling f : MyGdxGame.feelings) {
-            if (f.level == GameScreen.showedLevel) {
+            if (f.level == showedLevel) {
                 game.batch.draw(game.locked,
                         f.ABSOLUTE_START_X - 800  + addition,
                         f.ABSOLUTE_START_Y,
@@ -131,10 +134,10 @@ public final class ScreensUtils {
         for (int i = 0; i < ProgressData.getGapsCount(); i++)
             game.batch.draw(game.gap,xPositions.get(i),yPositions.get(i),Feeling.WIDTH,Feeling.HEIGHT);
         game.batch.draw(game.expBar, 405,445,242,20);
-        if (GameScreen.showedLevel < 3) game.batch.draw(game.scrollBar, 315, scrollBarY, 5, 80);
+        if (showedLevel < 3) game.batch.draw(game.scrollBar, 315, scrollBarY, 5, 80);
 
         for(Feeling f : MyGdxGame.feelings) {
-            if (f.level == GameScreen.showedLevel) {
+            if (f.level == showedLevel) {
                 game.batch.draw(game.locked, f.lockX, f.lockY, Feeling.WIDTH, Feeling.HEIGHT);
                 if (f.isOpened()) {
                     if (f.isMoving()) {
@@ -150,21 +153,26 @@ public final class ScreensUtils {
         game.batch.setColor(game.r,game.g,game.b,1f);
         game.batch.draw(game.blure,0 - counter,0);
         for(Feeling f : MyGdxGame.feelings) {
-            if (f.level == GameScreen.showedLevel - 1) {
+            if (f.level == showedLevel - 1) {
                 game.batch.draw(game.locked, f.lockX - counter, f.lockY, Feeling.WIDTH, Feeling.HEIGHT);
-                if (f.isOpened() & f.getBenchPosition() == 0) {
-                    game.batch.draw(f.getPicture(), f.lockX - counter, f.lockY, Feeling.WIDTH, Feeling.HEIGHT);
-                    if (f.isMoving()) {
-                        f.update();
+                if (f.isOpened()) {
+                    if (f.getBenchPosition() == 0) {
+                        game.batch.draw(f.getPicture(), f.lockX - counter, f.lockY, Feeling.WIDTH, Feeling.HEIGHT);
+                        if (f.isMoving()) {
+                            f.update();
+                        }
+                    } else {
+                        game.batch.draw(f.getPicture(),
+                                f.getCurrentPosition().x,
+                                f.getCurrentPosition().y,
+                                Feeling.WIDTH, Feeling.HEIGHT);
                     }
-                } else {
-                    game.batch.draw(f.getPicture(), f.getCurrentPosition().x, f.getCurrentPosition().y, Feeling.WIDTH, Feeling.HEIGHT);
                 }
             }
         }
 
         game.batch.draw(game.name_background,0 - counter,430);
-        game.font.draw(game.batch,"Уровень " + (GameScreen.showedLevel - 1),85 - counter,465);
+        game.font.draw(game.batch,"Уровень " + (showedLevel - 1),85 - counter,465);
 
         counter += 10;
         return counter;
@@ -174,7 +182,7 @@ public final class ScreensUtils {
         game.batch.setColor(game.r,game.g,game.b,1f);
         game.batch.draw(game.blure,0 - counter,0);
         for(Feeling f : MyGdxGame.feelings) {
-            if (f.level == GameScreen.showedLevel - 1) {
+            if (f.level == showedLevel - 1) {
                 game.batch.draw(game.locked, f.lockX - counter, f.lockY, Feeling.WIDTH, Feeling.HEIGHT);
                 if (f.isOpened()) {
                     game.batch.draw(f.getPicture(), f.lockX - counter, f.lockY, Feeling.WIDTH, Feeling.HEIGHT);
@@ -186,10 +194,53 @@ public final class ScreensUtils {
         }
 
         game.batch.draw(game.name_background,0 - counter,430);
-        game.font.draw(game.batch,"Уровень " + (GameScreen.showedLevel - 1),85 - counter,465);
+        game.font.draw(game.batch,"Уровень " + (showedLevel - 1),85 - counter,465);
 
         counter -= 10;
         return counter;
+    }
+
+    static int showPanel(MyGdxGame game, int counter) {
+        game.batch.begin();
+        game.batch.draw(game.panel,800 - counter, 220);
+        game.batch.draw(game.sin,805 - counter, 330, 40,40);
+        game.batch.draw(game.universal,805 - counter, 280, 40,40);
+        game.batch.draw(game.save,805 - counter, 230, 40,40);
+        font.getData().setScale(0.3f);
+        font.draw(game.batch,"x" + ProgressData.sins, 805 - counter,330);
+        font.draw(game.batch,"x" + ProgressData.universals, 805 - counter,280);
+        font.draw(game.batch,"x" + ProgressData.waitings, 805 - counter,230);
+        font.getData().setScale(3f);
+        counter += 5;
+        game.batch.end();
+        return counter;
+    }
+
+    static int hidePanel(MyGdxGame game, int counter) {
+        game.batch.begin();
+        game.batch.draw(game.panel,750 + counter, 220);
+        game.batch.draw(game.sin,755 + counter, 330, 40,40);
+        game.batch.draw(game.universal,755 + counter, 280, 40,40);
+        game.batch.draw(game.save,755 + counter, 230, 40,40);
+        font.getData().setScale(0.3f);
+        font.draw(game.batch,"x" + ProgressData.sins, 755 + counter,330);
+        font.draw(game.batch,"x" + ProgressData.universals, 755 + counter,280);
+        font.draw(game.batch,"x" + ProgressData.waitings, 755 + counter,230);
+        font.getData().setScale(3f);
+        counter += 5;
+        game.batch.end();
+        return counter;
+    }
+
+    static void drawPanel (MyGdxGame game) {
+        game.batch.begin();
+        game.batch.draw(game.panel,750, 220);
+        font.getData().setScale(0.3f);
+        font.draw(game.batch,"x" + ProgressData.sins, 755,330);
+        font.draw(game.batch,"x" + ProgressData.universals, 755,280);
+        font.draw(game.batch,"x" + ProgressData.waitings, 755,230);
+        font.getData().setScale(3f);
+        game.batch.end();
     }
 
     static void settingsScreenRender(MyGdxGame game,  OrthographicCamera camera) {
@@ -236,13 +287,13 @@ public final class ScreensUtils {
             game.batch.draw(game.goals_button,495,360,60,60);
             game.batch.draw(game.atlas_button,725, 15,50,50);
             game.batch.draw(game.blure, 0, 0, 315,480);
-            if (GameScreen.showedLevel < 3) game.batch.draw(game.scrollBar, 315, 400, 5, 80);
+            if (showedLevel < 3) game.batch.draw(game.scrollBar, 315, 400, 5, 80);
             font.getData().setScale(0.7f);
-            font.draw(game.batch,"Уровень " + GameScreen.showedLevel,85,465);
+            font.draw(game.batch,"Уровень " + showedLevel,85,465);
             font.getData().setScale(1.3f);
 
             for(Feeling f : MyGdxGame.feelings) {
-                if (f.level == GameScreen.showedLevel) {
+                if (f.level == showedLevel) {
                     game.batch.draw(game.locked, f.lockX, f.lockY, Feeling.WIDTH, Feeling.HEIGHT);
                     if (f.isOpened()) {
                         game.batch.draw(f.getPicture(), f.lockX, f.lockY, Feeling.WIDTH, Feeling.HEIGHT);
@@ -262,7 +313,7 @@ public final class ScreensUtils {
         camera.update();
         game.batch.setProjectionMatrix(camera.combined);
         game.batch.begin();
-        game.batch.draw(game.atlasElementBackground,0,-240);
+        game.batch.draw(game.atlasElementBackground,0,-1000, 800, 1480);
         game.batch.draw(f.getPicture(),0,240,240,240);
 
         game.batch.end();
@@ -276,10 +327,9 @@ public final class ScreensUtils {
         game.batch.begin();
         game.batch.draw(game.storeBackground,0,0);
 
-        // Продаваемое чувство
         font.getData().setScale(0.45f);
-        font.draw(game.batch,target.getName(),165,450);
-        font.draw(game.batch,SaveUtils.formatName("Структура " + target.getName().replaceAll(" ",""), 27),
+        font.draw(game.batch,SaveUtils.formatName("Чувство", 17),165,450);
+        font.draw(game.batch,SaveUtils.formatName("Структура чувства", 27),
                 390,450);
         font.draw(game.batch,"Универсальное чувство", 35,330);
         font.draw(game.batch,"Грех", 380,330);
@@ -315,7 +365,7 @@ public final class ScreensUtils {
                 feeling.hide();
             }
             for (Feeling feeling : MyGdxGame.feelings) {
-                if (feeling.isOpened()) {
+                if (feeling.isOpened() & feeling.level == GameScreen.showedLevel) {
                     stage.addActor(feeling);
                 }
             }
@@ -323,7 +373,7 @@ public final class ScreensUtils {
             newFeeling.open();
             newFeeling.hide();
 
-            ReactionUtils.target = MyGdxGame.feelings.get(newFeeling.getNumber());
+            Group.setTargetGroup();
 
             ProgressData.addToCurrentExperience(1);
             if (ProgressData.getCurrentExperience() == ProgressData.getToReachNextLevel()) {
@@ -361,6 +411,10 @@ public final class ScreensUtils {
             game.batch.end();
         }
         game.batch.draw(game.atlas_button,725, 15,50,50);
+        game.batch.draw(game.name_background, 0, 430);
+        game.font.draw(game.batch, "Уровень " + showedLevel, 85, 465);
+        game.batch.setColor(1, 1, 1, 1f);
+
         font.getData().setScale((float)0.5);
         if (stageNumber < 5)
             font.draw(game.batch,"Нажмите на экран чтобы пропустить", 20,20);
@@ -522,24 +576,22 @@ public final class ScreensUtils {
                         feeling.unhide();
                         feeling.setBenchPosition(0);
                     }
+
                     MyGdxGame.startProducts.clear();
+
+                    // Установка нужного showedLevel
+                    GameScreen.showedLevel = newFeeling.level;
 
                     // Возврат списка в изначальное положение
                     for (Feeling feeling : MyGdxGame.feelings) {
-                        if (feeling.isOpened()) {
+                        if (feeling.isOpened() & feeling.level == GameScreen.showedLevel) {
                             stage.addActor(feeling);
                         }
                         feeling.getCurrentPosition().x = feeling.getPosition().x = feeling.lockX = feeling.ABSOLUTE_START_X;
                         feeling.getCurrentPosition().y = feeling.getPosition().y = feeling.lockY = feeling.ABSOLUTE_START_Y;
+
                     }
                     scrollBarY = (float) 400;
-
-                    // Ожидание 2 секунды
-                    try {
-                        Thread.sleep(2000);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
                 } else {
                     // Прорисовка
                     game.batch.setColor(1, 1, 1, backgroundAlpha);
@@ -558,6 +610,9 @@ public final class ScreensUtils {
                     font.draw(game.batch,"Нажмите на экран чтобы продолжить", 20,20);
                     game.batch.setColor(1, 1, 1, newElementAlpha);
                     game.batch.draw(newFeeling.getPicture(), 340, 255, 120, 120);
+                    font.getData().setScale(1.2f);
+                    font.draw(game.batch,newFeeling.getName(),150,240);
+                    font.getData().setScale(0.5f);
                     // Присвоение прозрачности экрана
                     game.batch.setColor(1, 1, 1, screenAlpha);
                     // Переход к шестой стадии, завершающей
@@ -570,6 +625,9 @@ public final class ScreensUtils {
                     game.batch.draw(elementBackground, 0, 0, MyGdxGame.VIRTUAL_WIDTH, MyGdxGame.VIRTUAL_HEIGHT);
                     game.batch.setColor(1, 1, 1, newElementAlpha);
                     game.batch.draw(newFeeling.getPicture(), 340, 255, 120, 120);
+                    font.getData().setScale(1.2f);
+                    font.draw(game.batch,newFeeling.getName(),150,240);
+                    font.getData().setScale(0.5f);
                     // Присвоение прозрачности экрана
                     game.batch.setColor(1, 1, 1, screenAlpha);
                     // Изменение значений
@@ -593,7 +651,7 @@ public final class ScreensUtils {
                     newFeeling.unhide();
                     stage.clear();
                     for (Feeling feeling : MyGdxGame.feelings) {
-                        if (feeling.isOpened()) {
+                        if (feeling.isOpened() & feeling.level == GameScreen.showedLevel) {
                             stage.addActor(feeling);
                         }
                     }
@@ -681,13 +739,16 @@ public final class ScreensUtils {
                     }
                     MyGdxGame.startProducts.clear();
 
-                    //Смена шкалы опыта
+                    // Смена шкалы опыта
                     game.expBar = new Texture(Gdx.files.internal(
                             "interface/experience_bar/"+ ProgressData.getCurrentExperience() +".bmp"));
 
+                    // Установка нужного showedLevel
+                    GameScreen.showedLevel = newFeeling.level;
+
                     // Возврат списка в изначальное положение
                     for (Feeling feeling : MyGdxGame.feelings) {
-                        if (feeling.isOpened()) {
+                        if (feeling.isOpened() & feeling.level == GameScreen.showedLevel) {
                             stage.addActor(feeling);
                         }
                         feeling.getCurrentPosition().x = feeling.getPosition().x = feeling.lockX = feeling.ABSOLUTE_START_X;

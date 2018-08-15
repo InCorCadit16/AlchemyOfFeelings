@@ -24,7 +24,9 @@ import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.mygdx.game.logic.Feeling;
 import com.mygdx.game.MyGdxGame;
+import com.mygdx.game.logic.Group;
 import com.mygdx.game.logic.ProgressData;
+import com.mygdx.game.logic.ReactionUtils;
 import com.mygdx.game.logic.SaveUtils;
 
 
@@ -63,7 +65,11 @@ public class GameScreen implements Screen {
     // Отвечают за нажатие на элемент
     private static int independentCounter = 0;
     private static Feeling targetFeeling, doubleClickedFeeling;
-
+    
+    // Панель
+    private boolean isPanelShown = false;
+    private boolean movePanel = false;
+    private ImageButton  sin, save, universal;
 
     GameScreen(final MyGdxGame gam) {
         game = gam;
@@ -77,7 +83,7 @@ public class GameScreen implements Screen {
         game.font.getData().setScale(0.7f);
 
         goals_font.setUseIntegerPositions(true);
-        goals_font.getData().setScale(0.4f);
+        goals_font.getData().setScale(0.6f);
 
         // Для сохранения цветов элементов при изменении контрастности (производится при открытии нового элемента)
         game.batch = (SpriteBatch) stage.getBatch();
@@ -137,6 +143,25 @@ public class GameScreen implements Screen {
             SaveUtils.loadProgress();
             game.expBar = new Texture(Gdx.files.internal("interface/experience_bar/1.bmp"));
             ScreensUtils.new_lvl = false;
+            newLevelAnimation();
+        } else if (movePanel) {
+            if (!isPanelShown) {
+                counter = ScreensUtils.showPanel(game, counter);
+                if (counter == 50) {
+                    sin.setVisible(true); universal.setVisible(true); save.setVisible(true);
+                    counter = 0; movePanel = false; isPanelShown = true;
+                }
+            } else {
+                if (counter == 0) {
+                    sin.setVisible(false); universal.setVisible(false); save.setVisible(false);
+                }
+                counter = ScreensUtils.hidePanel(game, counter);
+                if (counter == 50) {
+                    counter = 0; movePanel = false; isPanelShown = false;
+                }
+            }
+        } else if (isPanelShown) {
+            ScreensUtils.drawPanel(game);
         }
 
         if (independentCounter > 0) {
@@ -154,9 +179,9 @@ public class GameScreen implements Screen {
         stage.act();
 
 
-            game.batch.begin();
-            game.batch.setColor(game.r, game.g, game.b, 1f);
-        if (!toMainScreen) {
+        game.batch.begin();
+        game.batch.setColor(game.r, game.g, game.b, 1f);
+        if (!toMainScreen & ScreensUtils.newFeeling == null) {
             game.batch.draw(game.name_background, 0, 430);
             game.font.draw(game.batch, "Уровень " + showedLevel, 85, 465);
             game.batch.setColor(1, 1, 1, 1f);
@@ -188,6 +213,10 @@ public class GameScreen implements Screen {
         if (Gdx.input.getInputProcessor() == goalsMultiplexer) {
             goalsStage.draw();
             goalsStage.act();
+            game.batch.begin();
+            goals_font.draw(game.batch,goalsStage.getActors().get(goalsStage.getActors().size - 1).getName(),
+                    270,190);
+            game.batch.end();
         }
     }
 
@@ -254,6 +283,23 @@ public class GameScreen implements Screen {
 
     }
 
+    private void newLevelAnimation() {
+        game.batch = new SpriteBatch();
+        switch (ProgressData.getCurrentLevel()) {
+            case 2:
+            for (int i = 15; i <= 19;i++) MyGdxGame.feelings.get(i).open();
+            MyGdxGame.feelings.get(15).getGroup().isOpened = true;
+            ProgressData.addToCurrentExperience(5);
+            game.setScreen(new AtlasScreen(game,true,3));
+            break;
+            // case 3: game.setScreen(new AtlasScreen(game,true,7)); break;
+            // case 4: game.setScreen(new AtlasScreen(game,true,9)); break;
+            // case 5: game.setScreen(new AtlasScreen(game,true,11)); break;
+            default: game.setScreen(new FinalScreen(game));
+        }
+        dispose();
+    }
+
     private void drawGoal() {
         game.batch.begin();
         if (toMainScreen) {
@@ -281,7 +327,8 @@ public class GameScreen implements Screen {
     private void setupStage() {
        normalizeElementsTable();
 
-       stage.clear();
+        stage.clear();
+        stage.getRoot().clearChildren();
         for (Feeling feeling : MyGdxGame.feelings) {
             if ((feeling.level == showedLevel | feeling.getBenchPosition() != 0) & feeling.isOpened()) {
                 stage.addActor(feeling);
@@ -348,6 +395,10 @@ public class GameScreen implements Screen {
         atlas_button = new ImageButton(new TextureRegionDrawable(new TextureRegion(game.atlas_button)));
         goals_background = new Image(game.goalsBackground);
 
+        sin = new ImageButton(new TextureRegionDrawable(new TextureRegion(game.sin)));
+        universal = new ImageButton(new TextureRegionDrawable(new TextureRegion(game.universal)));
+        save = new ImageButton(new TextureRegionDrawable(new TextureRegion(game.save)));
+
         // Настройки кнопок и меню
         arrow_left.setBounds(745, 425, 50, 50);
         buttonsStage.addActor(arrow_left);
@@ -357,6 +408,13 @@ public class GameScreen implements Screen {
 
         atlas_button.setBounds(725, 15, 50, 50);
         buttonsStage.addActor(atlas_button);
+
+        sin.setBounds(755, 330,40,40);
+        buttonsStage.addActor(sin);
+        universal.setBounds(755, 280,40,40);
+        buttonsStage.addActor(universal);
+        save.setBounds(755, 230,40,40);
+        buttonsStage.addActor(save);
 
         goals_background.setBounds(0, 470, 800, 480);
 
@@ -376,7 +434,6 @@ public class GameScreen implements Screen {
             public void clicked(InputEvent event, float x, float y) {
                 super.clicked(event, x, y);
                 if (event.getPointer() > 0) return;
-                goals_background.toFront();
                 goalsMenuStage = 1;
             }
         });
@@ -389,6 +446,37 @@ public class GameScreen implements Screen {
                 toAtlasScreen = true;
             }
         });
+
+        sin.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                super.clicked(event, x, y);
+                if (event.getPointer() > 0) return;
+                game.setScreen(new StoreScreen(game,null));
+            }
+        });
+
+        universal.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                super.clicked(event, x, y);
+                if (event.getPointer() > 0) return;
+                game.setScreen(new StoreScreen(game,null));
+            }
+        });
+
+        save.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                super.clicked(event, x, y);
+                if (event.getPointer() > 0) return;
+                game.setScreen(new StoreScreen(game,null));
+            }
+        });
+
+        sin.setVisible(false);
+        universal.setVisible(false);
+        save.setVisible(false);
     }
 
     protected void setupStandartMultiplexer() {
@@ -489,25 +577,35 @@ public class GameScreen implements Screen {
             @Override
             public boolean fling(float velocityX, float velocityY, int button) {
                 Vector3 v = camera.unproject(new Vector3(Gdx.input.getX(),Gdx.input.getY(),0));
-                if (v.x > 315) return false;
+                if (v.x < 315) {
+                    for (Feeling feeling : MyGdxGame.feelings) {
+                        if (feeling.isOpened() & feeling.isTaken()) {
+                            feeling.setIsTaken(false);
+                            return false;
+                        }
+                    }
 
-                for (Feeling feeling : MyGdxGame.feelings) {
-                    if (feeling.isOpened() & feeling.isTaken()) {
-                        feeling.setIsTaken(false);
-                        return false;
+                    if (velocityX < -400 & velocityX < velocityY) {
+                        if (showedLevel == 5 | showedLevel == ProgressData.getCurrentLevel()) return false;
+                        showedLevel++;
+                        showNext = true;
+                        return true;
+                    }
+                    if (velocityX > 400 & velocityX > velocityY) {
+                        if (showedLevel == 1) return false;
+                        showPrev = true;
+                        return true;
                     }
                 }
-
-                if (velocityX < -400 & velocityX < velocityY) {
-                    if (showedLevel == 5) return false;
-                    showedLevel++;
-                    showNext = true;
-                    return true;
-                }
-                if (velocityX > 400 & velocityX > velocityY) {
-                    if (showedLevel == 1) return false;
-                    showPrev = true;
-                    return true;
+                if (v.x > 600) {
+                    if (velocityX < -400 & !isPanelShown) {
+                        movePanel = true;
+                        return true;
+                    }
+                    if (velocityX > 400 & isPanelShown) {
+                        movePanel = true;
+                        return true;
+                    }
                 }
                 return false;
             }
@@ -544,8 +642,9 @@ public class GameScreen implements Screen {
                 if (goals_background.getY() < 0) {
                     goals_background.setY(0);
                     for (int i = 0; i < goals.length; i++) {
-                        if (i < 6) goals[i].setY(335);
-                        else goals[i].setY(230);
+                        if (goals[i] == null) continue;
+                        if (i < 5) goals[i].setY(335);
+                        else goals[i].setY(200);
                          goals[i].toFront();
                     }
                     return false; }
@@ -553,6 +652,7 @@ public class GameScreen implements Screen {
                 if (velocity != 0) {
                     goals_background.setY(goals_background.getY() - velocity + vector.y);
                     for (ImageButton btn : goals) {
+                        if (btn == null) continue;
                         btn.setY(btn.getY() - velocity + vector.y);
                     }
                 }
@@ -560,8 +660,9 @@ public class GameScreen implements Screen {
                 if (goals_background.getY() < 0) {
                     goals_background.setY(0);
                     for (int i = 0; i < goals.length; i++) {
-                        if (i < 6) goals[i].setY(335);
-                        else goals[i].setY(230);
+                        if (goals[i] == null) continue;
+                        if (i < 5) goals[i].setY(335);
+                        else goals[i].setY(200);
                         goals[i].toFront();
                     }
                     return false; }
@@ -588,30 +689,40 @@ public class GameScreen implements Screen {
     private void setupGoalsStage() {
         ImageButton button;
         goalsStage.addActor(goals_background);
-        int x = 60,y = 815, counter = 0;
-        for (Feeling feeling : MyGdxGame.feelings) {
-            if (!feeling.isOpened()) counter++;
-        }
-        goals = new ImageButton[12];
-        counter = 1;
-        for (Feeling feeling : MyGdxGame.feelings) {
+        int x = 65,y = 815;
+        goals = new ImageButton[6];
+        int counter = 0;
+        Group.setTargetGroup();
+        if (ReactionUtils.target != null)
+        for (Feeling feeling : ReactionUtils.target.elements) {
             if (!feeling.isOpened()) {
-                if (goals[11] != null) break;
+                if (counter == 5) break;
                 button = new ImageButton(new TextureRegionDrawable(new TextureRegion(feeling.getPicture())));
-                button.setBounds(x,y,65,65);
+                button.setBounds(x,y,80,80);
                 button.setName(feeling.getName());
 
                 goalsStage.addActor(button);
-                goals[counter - 1] = button;
+                goals[counter] = button;
 
-                setClickListener(button);
+                //TODO:Убрать комментарии, когда все иконки будут готовы
+                //setClickListener(button);
 
-                x+=123;
-                if (counter % 6 == 0) { x = 60; y -= 105; }
-                counter++;
+                x+=145;
             }
+            counter++;
         }
 
+        Feeling buf = null;
+        for (Feeling f: MyGdxGame.feelings) {
+            if (f.level == ProgressData.getCurrentLevel()) buf = f;
+        }
+        button = new ImageButton(new TextureRegionDrawable(new TextureRegion(buf.getPicture())));
+        button.setBounds(355,715,80,80);
+        button.setName(buf.getName());
+        goalsStage.addActor(button);
+        goals[5] = button;
+
+        //setClickListener(button);
     }
 
     private void setClickListener(ImageButton button) {
@@ -619,28 +730,21 @@ public class GameScreen implements Screen {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 if (event.getPointer() > 0) return;
-                chosen_goal = getFeelingByName(button.getName());
+                chosen_goal = Feeling.findFeeling(button.getName());
                 goalsMenuStage = 2;
                 super.clicked(event, x, y);
             }
         });
     }
 
-    private Feeling getFeelingByName(String name) {
-        for (Feeling f:MyGdxGame.feelings) {
-            if (f.getName().equals(name)) return f;
-        }
-        return null;
-    }
-
     private void goalsBackgroundDown() {
         goals_background.toFront();
         if (goals_background.getY() <= 30) {
             goals_background.setY(0);
-            goals_background.toFront();
             for (int i = 0; i < goals.length; i++) {
-                 if (i < 6) goals[i].setY(335);
-                 else goals[i].setY(230);
+                if (goals[i] == null) continue;
+                 if (i < 5) goals[i].setY(335);
+                 else goals[i].setY(200);
                  goals[i].toFront();
             }
             Gdx.input.setInputProcessor(goalsMultiplexer);
@@ -648,6 +752,7 @@ public class GameScreen implements Screen {
         } else {
             goals_background.setY(goals_background.getY() - 35);
             for (ImageButton btn : goals) {
+                if (btn == null) continue;
                 btn.setY(btn.getY() - 35);
                 btn.toFront();
             }
@@ -659,8 +764,9 @@ public class GameScreen implements Screen {
             goals_background.setY(480);
             goals_background.toFront();
             for (int i = 0; i < goals.length; i++) {
-                if (i < 6) goals[i].setY(815);
-                else goals[i].setY(710);
+                if (goals[i] == null) continue;
+                if (i < 5) goals[i].setY(815);
+                else goals[i].setY(680);
                 goals[i].toFront();
             }
             Gdx.input.setInputProcessor(standartMultiplexer);
@@ -668,6 +774,7 @@ public class GameScreen implements Screen {
         } else {
             goals_background.setY(goals_background.getY() + 35);
             for (ImageButton btn: goals) {
+                if (btn == null) continue;
                 btn.setY(btn.getY() + 35);
                 btn.toFront();
             }

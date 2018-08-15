@@ -2,6 +2,7 @@ package com.mygdx.game;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -10,6 +11,8 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.mygdx.game.logic.Buy;
 import com.mygdx.game.logic.Feeling;
 import com.mygdx.game.logic.Group;
 import com.mygdx.game.logic.ProgressData;
@@ -31,17 +34,17 @@ public class MyGdxGame extends Game {
 	public final static int VIRTUAL_WIDTH = 800, VIRTUAL_HEIGHT = 480;
 	public SpriteBatch batch;
 	public BitmapFont font;
-	public Texture wall, night, evening, morning, day, storeBackground, goalsBackground, atlasBackground, settingsBackground,locked, gap, scrollBar, expBar, left_arrow, blure, play_texture, atlas_texture, settings_texture, write_texture, play_texture_pressed, atlas_texture_pressed, settings_texture_pressed, write_texture_pressed, goals_button, atlas_button,language_en, language_ru, music_on, music_off, sound_on, sound_off, notification_on, notification_off, main_button, main_button_pressed,atlasElementBackground, name_background, coin, glasses, structure, sin, save, universal, ques_pack,two_pack,three_pack, four_pack;
+	public Texture wall, night, evening, morning, day, storeBackground, goalsBackground, atlasBackground, settingsBackground,locked, gap, scrollBar, expBar, left_arrow, blure, play_texture, atlas_texture, settings_texture, write_texture, play_texture_pressed, atlas_texture_pressed, settings_texture_pressed, write_texture_pressed, goals_button, atlas_button,language_en, language_ru, music_on, music_off, sound_on, sound_off, notification_on, notification_off, main_button, main_button_pressed,atlasElementBackground, name_background, coin, glasses, structure, sin, save, universal, ques_pack,two_pack,three_pack, four_pack, panel;
 	public static ArrayList<Feeling> feelings = new ArrayList<>();
 	public static ArrayList<Group> groups = new ArrayList<>();
-	public static Group new_group = null;
 	public SendEmail sendEmail;
+	public Buy buy;
 	public Music playlist;
 
 	// Для времени
 	public static Date currentTime;
 	public static final SimpleDateFormat df = new SimpleDateFormat("D HH:mm:ss", Locale.UK);
-	public float r,g,b;
+	public float r = 1,g = 1,b = 1;
 	public float alpha_morning,alpha_day,alpha_evening,alpha_night;
 
     //Переменные настроек
@@ -50,8 +53,9 @@ public class MyGdxGame extends Game {
     // Для проведения реакций
 	public static HashMap<Integer, Feeling> startProducts = new HashMap<>();
 
-	public MyGdxGame(SendEmail EmailImplementation) {
+	public MyGdxGame(SendEmail EmailImplementation, Buy buyImplementation) {
 		sendEmail = EmailImplementation;
+		buy = buyImplementation;
 	}
 
 	@Override
@@ -59,7 +63,6 @@ public class MyGdxGame extends Game {
 		batch = new SpriteBatch();
 		font = setupMinecraftFont();
 
-		SaveUtils.createProgress();
         initTextures();
         initBackgrounds();
 
@@ -107,6 +110,7 @@ public class MyGdxGame extends Game {
 		left_arrow = new Texture(Gdx.files.internal("interface/game_zone/left_arrow.psd"));
 		blure = new Texture(Gdx.files.internal("interface/game_zone/blure.png"));
 		name_background = new Texture(Gdx.files.internal("interface/game_zone/name_background.png"));
+		panel = new Texture(Gdx.files.internal("interface/game_zone/panel.psd"));
 
 		notification_off = new Texture(Gdx.files.internal("interface/settings/notification_off.png"));
 		notification_on = new Texture(Gdx.files.internal("interface/settings/notification_on.png"));
@@ -167,6 +171,17 @@ public class MyGdxGame extends Game {
 		parameter.size = 32;
 		parameter.color = Color.WHITE;
 		parameter.spaceX = 3;
+		parameter.characters = "абвгдежзийклмнопрстуфхцчшщъыьэюяabcdefghijklmnopqrstuvwxyzАБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789][_!$%#@|\\/?-+=()*&.;:,{}\"´`'<>";
+		BitmapFont font = generator.generateFont(parameter);
+		generator.dispose();
+		return font;
+	}
+
+	public static BitmapFont setupHandWritingFont() {
+		FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/handwriting.ttf"));
+		FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+		parameter.size = 36;
+		parameter.color = Color.BLACK;
 		parameter.characters = "абвгдежзийклмнопрстуфхцчшщъыьэюяabcdefghijklmnopqrstuvwxyzАБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789][_!$%#@|\\/?-+=()*&.;:,{}\"´`'<>";
 		BitmapFont font = generator.generateFont(parameter);
 		generator.dispose();

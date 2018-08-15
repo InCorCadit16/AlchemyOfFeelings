@@ -1,7 +1,7 @@
 <component name="libraryTable">
-  <library name="core.core-1.0">
+  <library name="desktop.desktop-1.1">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/core/build/libs/core-1.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/desktop/build/libs/desktop-1.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

@@ -270,6 +270,11 @@ public class Feeling extends Actor  {
             f.direction = f.position.cpy().sub(f.currentPosition.cpy()).nor();
             f.bufferVector = new Vector2(Math.abs(f.currentPosition.x - f.position.x), Math.abs(f.currentPosition.y - f.position.y));
             f.setTouchable(Touchable.disabled);
+            if (f.level != GameScreen.showedLevel) {
+                f.currentPosition.x = f.position.x;
+                f.currentPosition.y = f.position.y;
+                f.remove();
+            }
         }
         MyGdxGame.startProducts.clear();
     }

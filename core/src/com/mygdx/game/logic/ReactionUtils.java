@@ -9,12 +9,13 @@ import com.mygdx.game.view.ScreensUtils;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 public final class ReactionUtils {
-    public static Feeling target;
+    public static Group target;
 
     public static void checkGaps (Feeling feeling) {
 
@@ -36,42 +37,64 @@ public final class ReactionUtils {
     }
 
     public static boolean checkForReaction() {
+        Group.setTargetGroup();
         if (MyGdxGame.startProducts.size() == ProgressData.getGapsCount()) {
-            String[] givenF, targetF;
+            String[] givenF;
             ArrayList<Feeling> feelingsArray = new ArrayList<>(MyGdxGame.startProducts.values());
             Collections.sort(feelingsArray, (feeling, t1) -> {
-                return feeling.getName().replaceAll(" ","").length() >= t1.getName().replaceAll(" ","").length()? 1:-1; });
+                int f = 0,t = 0;
+                for (int i = 0; i < feeling.getName().length();i++) {
+                    f += feeling.getName().charAt(i);
+                }
+                for (int i = 0; i < t1.getName().length();i++) {
+                    t += t1.getName().charAt(i);
+                }
+                return f > t? 1:-1; });
 
             givenF = new String[ProgressData.getGapsCount()];
-            targetF = new String[ProgressData.getGapsCount()];
             for (int i = 0; i < givenF.length; i++) {
                 givenF[i] = feelingsArray.get(i).getName();
-                if (target != null) targetF[i] =  target.getFormula().get(i).getName();
             }
 
             if (ProgressData.getCurrentLevel() < 3) {
                 // Low level Check (до 3 уровня, где работают группы)
-                return Arrays.equals(givenF,targetF);
+                return lowLevelCheck(givenF);
             } else {
                 // High level Check (от 3 уровня и выше)
-                return highLevelCheck(feelingsArray, givenF);
+                return highLevelCheck(givenF);
             }
         }
         return true;
     }
 
-    private static boolean highLevelCheck(ArrayList<Feeling> feelings, String[] givenF) {
-        for (int n = feelings.get(0).getNumber(); n < MyGdxGame.feelings.size(); n++) {
-            if (MyGdxGame.feelings.get(n).isOpened()) continue;
+    private static boolean highLevelCheck(String[] givenF) {
+        for (Feeling f:MyGdxGame.feelings) {
+            if (f.level == ProgressData.getCurrentLevel()) {
+                if (f.isOpened()) continue;
 
-            if (isFormulaRight(givenF, MyGdxGame.feelings.get(n))) {
-                checkGroup(MyGdxGame.feelings.get(n));
-                ScreensUtils.newFeeling = MyGdxGame.feelings.get(n);
+                if (isFormulaRight(givenF, f)) {
+                    checkGroup(f);
+                    ScreensUtils.newFeeling = f;
+                    ScreensUtils.stageNumber = 1;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean lowLevelCheck(String[] givenF) {
+        for (Feeling f:target.elements) {
+            if (f.isOpened()) continue;
+
+            if (isFormulaRight(givenF, f)) {
+                checkGroup(f);
+                ScreensUtils.newFeeling = f;
                 ScreensUtils.stageNumber = 1;
                 return true;
             }
         }
-        return false;
+       return false;
     }
 
     private static boolean isFormulaRight(String[] givenFormula, Feeling feeling) {
@@ -87,11 +110,11 @@ public final class ReactionUtils {
         }
     }
 
+
     private static void checkGroup(Feeling feeling) {
-        for (Feeling f: feeling.getGroup().elements) {
-            if (f.isOpened()) return;
-        }
-        MyGdxGame.new_group = feeling.getGroup();
+        if (feeling.getGroup().isOpened) return;
+        feeling.getGroup().isOpened = true;
+        Group.setTargetGroup();
     }
     
     private static void sort() {

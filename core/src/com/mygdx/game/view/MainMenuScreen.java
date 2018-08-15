@@ -14,7 +14,10 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.mygdx.game.MyGdxGame;
+import com.mygdx.game.logic.Group;
 import com.mygdx.game.logic.ProgressData;
+import com.mygdx.game.logic.ReactionUtils;
+import com.mygdx.game.logic.SaveUtils;
 
 public class MainMenuScreen implements Screen {
     private final MyGdxGame game;
@@ -35,6 +38,7 @@ public class MainMenuScreen implements Screen {
 
         toStage = -1;
 
+        Group.setTargetGroup();
         setupButtons();
         if (fromGame) counter = 20;
         Gdx.input.setInputProcessor(stage);

@@ -10,11 +10,9 @@ import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
-import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.mygdx.game.MyGdxGame;
 import com.mygdx.game.logic.Feeling;
-import com.mygdx.game.logic.ReactionUtils;
 
 public class StoreScreen implements Screen {
     private final MyGdxGame game;
@@ -29,7 +27,11 @@ public class StoreScreen implements Screen {
         stage = new Stage(new StretchViewport(MyGdxGame.VIRTUAL_WIDTH,MyGdxGame.VIRTUAL_HEIGHT,camera));
 
         if (targ != null) target = targ;
-        else target = ReactionUtils.target;
+        else {
+            for (Feeling f: MyGdxGame.feelings) {
+                if (!f.isOpened()) target = f;
+            }
+        }
 
         setupButtons();
 
@@ -77,6 +79,7 @@ public class StoreScreen implements Screen {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                // Покупка элемента
+                game.buy.open("Чувство","Покупка нового элемента.");
             }
         });
 
@@ -88,6 +91,7 @@ public class StoreScreen implements Screen {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 // Покупка структуры
+                game.buy.open("Структура","Покупка структуры элемента.");
             }
         });
 
@@ -99,6 +103,7 @@ public class StoreScreen implements Screen {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 // Покупка универсального элемента
+                game.buy.open("Универсальное чувство","Универсльный элемент может быть использован в любом рецепте, что заменить недостающее звено.");
             }
         });
 
@@ -110,6 +115,7 @@ public class StoreScreen implements Screen {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 // Покупка греха
+                game.buy.open("Грех","Грех поможет изменить полярность элемента, что повлияет на финал игры. Работает только на легендарные элементы.");
             }
         });
 
@@ -121,6 +127,7 @@ public class StoreScreen implements Screen {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 // Покупка задержки элементов
+                game.buy.open("Задержка элементов","Элементы, подходящие к искомому чувсвту будут оставаться в ячейке рабочей зоны. Дайствует пока не будут отрыты 2 новых чувсвтва");
             }
         });
 
@@ -132,6 +139,7 @@ public class StoreScreen implements Screen {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 // Покупка 3 подсказок
+                game.buy.open("3 подсказки","Покупка сразу всех трёх подсказок");
             }
         });
 
@@ -143,6 +151,7 @@ public class StoreScreen implements Screen {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 // Покупка 2 чувств
+                game.buy.open("2 чувства","Покупка двух чувств с вашего уровня");
             }
         });
 
@@ -154,6 +163,7 @@ public class StoreScreen implements Screen {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 // Покупка 3 чувств
+                game.buy.open("3 чувства","Покупка трёх чувств с вашего уровня");
             }
         });
 
@@ -166,6 +176,7 @@ public class StoreScreen implements Screen {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 // Покупка 4 чувств
+                game.buy.open("4 чувства","Покупка четырёх чувств с вашего уровня");
             }
         });
 

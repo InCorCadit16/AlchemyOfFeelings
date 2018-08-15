@@ -1,13 +1,14 @@
 package com.mygdx.game.logic;
 
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
+import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
 
 import java.util.ArrayList;
 
 public class AtlasPage {
     public int title;
-    public String titleText;
-    public ArrayList<Button> elements;
+    public String titleText_f,titleText_s;
+    public ArrayList<ImageButton> elements;
     public int left,right;
     
     public AtlasPage() {
@@ -16,7 +17,7 @@ public class AtlasPage {
         left = right = 0;
     }
     
-    public void add(Button btn) {
+    public void add(ImageButton btn) {
         elements.add(btn);
     }
     
